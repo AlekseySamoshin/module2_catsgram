@@ -5,7 +5,11 @@ import ru.yandex.practicum.catsgram.exceptions.PostNotFoundException;
 import ru.yandex.practicum.catsgram.model.Post;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static ru.yandex.practicum.catsgram.Constants.DESCENDING_ORDER;
 
 @Service
 public class PostService {
@@ -26,4 +30,21 @@ public class PostService {
         posts.add(post);
         return post;
     }
+
+    public Collection<Post> findAllByEmail(String email, Integer size, String sort) {
+        return posts.stream()
+                .filter(p -> email.equals(p.getAuthor()))
+                .sorted((p0, p1) -> compare(p0, p1, sort))
+                .limit(size)
+                .collect(Collectors.toList());
+    }
+
+    private int compare(Post p0, Post p1, String sort) {
+        int result = p0.getCreationDate().compareTo(p1.getCreationDate()); //прямой порядок сортировки
+        if (sort.equals(DESCENDING_ORDER)) {
+            result = -1 * result; //обратный порядок сортировки
+        }
+        return result;
+    }
+
 }
