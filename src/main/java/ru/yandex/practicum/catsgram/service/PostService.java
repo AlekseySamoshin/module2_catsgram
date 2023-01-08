@@ -2,6 +2,8 @@ package ru.yandex.practicum.catsgram.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.catsgram.dao.PostDao;
+import ru.yandex.practicum.catsgram.dao.impl.PostDaoImpl;
 import ru.yandex.practicum.catsgram.exceptions.PostNotFoundException;
 import ru.yandex.practicum.catsgram.exceptions.UserNotFoundException;
 import ru.yandex.practicum.catsgram.model.Post;
@@ -17,24 +19,50 @@ import static ru.yandex.practicum.catsgram.Constants.DESCENDING_ORDER;
 
 @Service
 public class PostService {
+
+    private final PostDao postDao;
     private final UserService userService;
+
     private final List<Post> posts = new ArrayList<>();
 
     private static Integer globalId = 0;
 
     @Autowired
-    public PostService(UserService userService) {
+    public PostService(PostDao postDao, UserService userService) {
+        this.postDao = postDao;
         this.userService = userService;
     }
 
+    public Collection<Post> findPostsByUser(String authorId, Integer size, String sort) {
+        return findPostsByUser(authorId)
+                .stream()
+                .sorted((p0, p1) -> {
+                    int comp = p0.getCreationDate().compareTo(p1.getCreationDate()); //прямой порядок сортировки
+                    if (sort.equals("desc")) {
+                        comp = -1 * comp; //обратный порядок сортировки
+                    }
+                    return comp;
+                })
+                .limit(size)
+                .collect(Collectors.toList());
+    }
+
+
+    public Collection<Post> findPostsByUser(String userId) {
+        User user = userService.findUserById(userId)
+                .orElseThrow(() ->new UserNotFoundException("Пользователь с идентификатором " + userId + " не найден."));
+
+        return postDao.findPostsByUser(user);
+    }
+
     public Post create(Post post) {
-        Optional<User> postAuthor = userService.findUserById(post.getAuthor());
+        Optional<User> postAuthor = userService.findUserById(post.getAuthor().getId());
         if (postAuthor == null) {
             throw new UserNotFoundException(String.format(
                     "Пользователь %s не найден",
                     post.getAuthor()));
         }
-        
+
         posts.add(post);
         return post;
     }

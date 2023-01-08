@@ -33,7 +33,7 @@ public class PostFeedController {
 
         List<Post> result = new ArrayList<>();
         for (String friendEmail : feedParams.getFriendsEmails()) {
-            result.addAll(postService.FindAllByUserEmail(friendEmail, feedParams.getSize(), feedParams.getSort()));
+            result.addAll(postService.findPostsByUser(friendEmail, feedParams.getSize(), feedParams.getSort()));
         }
         return result;
     }
